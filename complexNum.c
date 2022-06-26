@@ -55,6 +55,39 @@ complex_num* sub(complex_num cn1, complex_num cn2) {
     return cn_init(cn1.re-cn2.re, cn1.im-cn2.im);
 }
 
+complex_num* mul(complex_num cn1, complex_num cn2) {
+    return cn_init(cn1.re * cn2.re - cn2.im * cn1.im, cn1.re * cn2.im + cn1.im * cn2.re);
+}
+
+complex_num* truediv(complex_num cn1, complex_num cn2) {
+    if (cn2.re == 0 && cn2.im == 0) {
+        printf("Деление на 0");
+        return Py_None;
+    } else return cn_init((cn1.re * cn2.re + cn1.im * cn2.im)
+                          / (cn2.re * cn2.re + cn2.im * cn2.im),
+                          (cn2.re * cn1.im - cn1.re * cn2.im) /
+                          (cn2.re * cn2.re + cn2.im * cn2.im));
+}
+
+complex_num* r_pow(complex_num cn, double n) {
+    return cn_init(cn.norm * cos(cn.angle * n), cn.norm * sin(cn.angle * n));
+}
+
+PyObject *cln(PyObject *self) {
+    complex_num* cn = (complex_num *)self;
+    printf("%.2f + i * (%.2f + 2pi * n, n - целое)\n", log(cn->norm), cn->angle);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+PyObject *c_pow(PyObject *self1, PyObject *self2) {
+    complex_num* cn1 = (complex_num *)self1;
+    complex_num* cn2 = (complex_num *)self2;
+    printf("e ^ ((%.2f + i * %.2f) * (%.2f + i * (%.2f + 2pi * n, n - целое))\n", cn2->re, cn2->im, log(cn1->norm), cn1->angle);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 complex_num* new_cn(PyObject *self)
 {
     complex_num* cn = cn_init(0, 0);
@@ -64,8 +97,7 @@ complex_num* new_cn(PyObject *self)
 PyObject *print_alg(PyObject* self)
 {
     complex_num* cn = (complex_num *)self;
-    printf("%.2f + i*%.2f", cn->re, cn->im);
-    printf("\n");
+    printf("%.2f + i*%.2f\n", cn->re, cn->im);
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -73,9 +105,16 @@ PyObject *print_alg(PyObject* self)
 PyObject *print_trig(PyObject* self)
 {
     complex_num* cn = (complex_num *)self;
-    printf("%.2f*(cos(%.2f) + i*sin(%.2f))", cn->norm, cn->angle, cn->angle);
-    printf("\n");
+    printf("%.2f * (cos(%.2f) + i * sin(%.2f))\n", cn->norm, cn->angle, cn->angle);
+    printf("or %.2f * (%.2f + i * %.2f)\n", cn->norm, cos(cn->angle), sin(cn->angle));
     Py_INCREF(Py_None);
     return Py_None;
 }
 
+PyObject *print_exp(PyObject* self)
+{
+    complex_num* cn = (complex_num *)self;
+    printf("%.2f * e ^ (i * %f.2)\n", cn->norm, cn->angle);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
