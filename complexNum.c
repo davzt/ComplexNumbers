@@ -12,7 +12,7 @@ PyMethodDef cn_methods[] = {
         print_trig,
         METH_VARARGS,
         "Print complex number in trigonometrical form"
-    },
+    }, {NULL, NULL, 0, NULL}
 //    {
 //        "set",
 //        set_cn,
