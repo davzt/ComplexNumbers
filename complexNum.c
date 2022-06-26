@@ -13,12 +13,12 @@ PyMethodDef cn_methods[] = {
         METH_VARARGS,
         "Print complex number in trigonometrical form"
     },
-    {
-        "set",
-        set_cn,
-        METH_VARARGS,
-        "Set complex number"
-    }
+//    {
+//        "set",
+//        set_cn,
+//        METH_VARARGS,
+//        "Set complex number"
+//    }
 };
 
 PyTypeObject cn_Type = {
