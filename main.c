@@ -3,19 +3,16 @@
 
 PyMethodDef own_methods[] = {
         {
-                "print_alg",
-                print_alg,
+                "CN",
+                create,
                 METH_VARARGS,
-                "Print complex number in algebraic form"
+                "Creating complex number"
         },
         {
-                "print_trig",
-                print_trig,
+                "sum",
+                sum,
                 METH_VARARGS,
-                "Print complex number in trigonometrical form"
-        },
-        {
-        "cn_init", cn_init, METH_VARARGS, "Init complex number"
+                "Sum"
         },
         {NULL, NULL, 0, NULL}
 };

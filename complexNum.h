@@ -1,5 +1,5 @@
-#ifndef COMPLEXNUM
-#define COMPLEXNUM
+#ifndef COMPLEXNUM_H
+#define COMPLEXNUM_H
 #define PY_SSIZE_T_CLEAN
 #define _USE_MATH_DEFINES
 #include <Python.h>
@@ -14,8 +14,13 @@ typedef struct
 
 PyMethodDef cn_methods[];
 PyTypeObject cn_Type;
-complex_num* cn_init(double re, double im);
-complex_num* sum(complex_num cn1, complex_num cn2);
+void init(double re, double im);
+PyObject* create(PyObject* self, PyObject* args);
+PyObject* re(PyObject* self);
+PyObject* im(PyObject* self);
+PyObject* norm(PyObject* self);
+PyObject* angle(PyObject* self);
+PyObject* sum(PyObject* cn1, PyObject* cn2);
 complex_num* sub(complex_num cn1, complex_num cn2);
 complex_num* mul(complex_num cn1, complex_num cn2);
 complex_num* truediv(complex_num cn1, complex_num cn2);
@@ -23,7 +28,8 @@ complex_num* z_pow(complex_num cn, double n);
 PyObject *cln(PyObject *self);
 PyObject *c_pow(PyObject *self1, PyObject *self2);
 complex_num* new_cn(PyObject* self);
-PyObject *print_alg(PyObject* self);
-PyObject *print_trig(PyObject* self);
-PyObject *print_exp(PyObject* self);
+PyObject *outAlg(PyObject* self);
+PyObject *outTrig(PyObject* self);
+PyObject *outExp(PyObject* self);
+
 #endif
