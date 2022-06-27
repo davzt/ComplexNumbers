@@ -36,23 +36,22 @@ complex_num* cn_init(double re, double im)
     cn->re = re;
     cn->im = im;
     if (re == 0) {
-        if (im > 0) cn->angle = M_PI / 2;
-        else cn->angle = 3 * M_PI / 2;
+        if (im > 0) cn->angle = 3.14 / 2;
+        else cn->angle = 3 * 3.14 / 2;
     } else {
-        if (re < 0) cn->angle = atan(im/re) + M_PI;
-        else cn->angle = atan(im/re);
+        if (re < 0) cn->angle = atan(im / re) + 3.14;
+        else cn->angle = atan(im / re);
     }
-    cn->norm = sqrt(re*re + im*im);
+    cn->norm = sqrt(re * re + im * im);
     return cn;
 }
 
-
 complex_num* sum(complex_num cn1, complex_num cn2) {
-    return cn_init(cn1.re+cn2.re, cn1.im+cn2.im);
+    return cn_init(cn1.re + cn2.re, cn1.im + cn2.im);
 }
 
 complex_num* sub(complex_num cn1, complex_num cn2) {
-    return cn_init(cn1.re-cn2.re, cn1.im-cn2.im);
+    return cn_init(cn1.re - cn2.re, cn1.im - cn2.im);
 }
 
 complex_num* mul(complex_num cn1, complex_num cn2) {
@@ -69,8 +68,12 @@ complex_num* truediv(complex_num cn1, complex_num cn2) {
                           (cn2.re * cn2.re + cn2.im * cn2.im));
 }
 
-complex_num* r_pow(complex_num cn, double n) {
-    return cn_init(cn.norm * cos(cn.angle * n), cn.norm * sin(cn.angle * n));
+complex_num* z_pow(complex_num cn, double n) {
+    double cc1, zero = 0;
+    if (cn.re == 0 && cn.im == 0 && n == 0) return cn_init(1,0);
+    if (n > 0 && modf(n, &cc1) == zero)
+        return cn_init(cn.norm * cos(cn.angle * n), cn.norm * sin(cn.angle * n));
+    else return Py_None;
 }
 
 PyObject *cln(PyObject *self) {
@@ -97,13 +100,12 @@ complex_num* new_cn(PyObject *self)
 PyObject *print_alg(PyObject* self)
 {
     complex_num* cn = (complex_num *)self;
-    printf("%.2f + i*%.2f\n", cn->re, cn->im);
+    printf("%.2f + i * %.2f\n", cn->re, cn->im);
     Py_INCREF(Py_None);
     return Py_None;
 }
 
-PyObject *print_trig(PyObject* self)
-{
+PyObject *print_trig(PyObject* self) {
     complex_num* cn = (complex_num *)self;
     printf("%.2f * (cos(%.2f) + i * sin(%.2f))\n", cn->norm, cn->angle, cn->angle);
     printf("or %.2f * (%.2f + i * %.2f)\n", cn->norm, cos(cn->angle), sin(cn->angle));
@@ -111,10 +113,38 @@ PyObject *print_trig(PyObject* self)
     return Py_None;
 }
 
-PyObject *print_exp(PyObject* self)
-{
+PyObject *print_exp(PyObject* self) {
     complex_num* cn = (complex_num *)self;
     printf("%.2f * e ^ (i * %f.2)\n", cn->norm, cn->angle);
     Py_INCREF(Py_None);
     return Py_None;
+}
+
+double diffx(double (*f)(double, double), double x, double y) {
+    const double delta = 1.0e-6;
+    return (f(x + delta, y) - f(x, y)) / delta;
+}
+
+double diffy(double (*f)(double, double), double x, double y) {
+    const double delta = 1.0e-6;
+    return (f(x, y + delta) - f(x, y)) / delta;
+}
+
+double u(x, y) {
+    return x * x - 2 * y;
+}
+
+double v(x, y) {
+    return y * y - 2 * y + x;
+}
+
+complex_num * complex_derivative (double (*u)(double, double), double (*v)(double, double), double x, double y) {
+    double dux = diffx(u, x, y);
+    double duy = diffy(u, x, y);
+    double dvx = diffx(v, x, y);
+    double dvy = diffy(v, x, y);
+    if (dux == dvy && - dvx == duy) {
+        return cn_init(dux, dvx);
+    }
+    else return Py_None;
 }

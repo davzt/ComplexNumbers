@@ -28,16 +28,12 @@ static PyModuleDef simple_module = {
         own_methods
 };
 
-PyMODINIT_FUNC PyInit_complex_numbers(void)
-{
+PyMODINIT_FUNC PyInit_complex_numbers() {
     PyObject* mod;
     cn_Type.tp_new = PyType_GenericNew;
-    if(PyType_Ready(&cn_Type) < 0)
-        return NULL;
+    if(PyType_Ready(&cn_Type) < 0) return NULL;
     mod = PyModule_Create(&simple_module);
-    if (mod==NULL)
-        return NULL;
-
+    if (mod == NULL) return NULL;
     Py_INCREF(&cn_Type);
     return mod;
 }
