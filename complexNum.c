@@ -1,6 +1,6 @@
 #include "complexNum.h"
 
-PyMethodDef cn_methods[] = {
+static PyMethodDef cn_methods[] = {
     {
         "outAlg",
         outAlg,
@@ -12,6 +12,12 @@ PyMethodDef cn_methods[] = {
         outTrig,
         METH_VARARGS,
         "Print complex number in trigonometrical form"
+    },
+    {
+        "outExp",
+        outExp,
+        METH_VARARGS,
+        "Print complex number in exponential form"
     },
     {
         "re",
@@ -37,13 +43,6 @@ PyMethodDef cn_methods[] = {
         METH_VARARGS,
         "Angle of complex number"
     },
-    {
-        "sum",
-        sum,
-        METH_VARARGS,
-        "Sum of 2 complex numbers"
-    },
-
     {NULL, NULL, 0, NULL}
 };
 
@@ -51,11 +50,16 @@ PyTypeObject cn_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "complex_num",
     .tp_basicsize = sizeof(complex_num),
+    .tp_dealloc = (destructor)clean,
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_doc = "Complex number",
     .tp_methods = cn_methods,
 };
 
+void clean(complex_num* self){
+    Py_XDECREF(self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
+}
 
 void init(complex_num* cn, double re, double im) {
     cn->re = re;
@@ -98,57 +102,85 @@ PyObject* angle(PyObject* self) {
     return Py_BuildValue("d", cn->angle);
 }
 
-PyObject* sum(PyObject* cn1, PyObject* cn2) {
-    double re, im;
-    re = ((complex_num*)cn1)->re + ((complex_num*)cn2)->re;
-    im = ((complex_num*)cn1)->im + ((complex_num*)cn2)->im;
-    return create(cn1, Py_BuildValue("(dd)", re, im));
-}
-/*
-PyObject** sub(PyObject* cn1, PyObject* cn2) {
-    return init(cn1.re - cn2.re, cn1.im - cn2.im);
+PyObject* sum(PyObject* self, PyObject* args) {
+    complex_num *c1, *c2;
+    double im, re;
+    if (!PyArg_ParseTuple(args, "O!O!", &cn_Type, &c1, &cn_Type, &c2)) return NULL;
+    re = c1->re + c2->re;
+    im = c1->im + c2->im;
+    return create(self, Py_BuildValue("(dd)", re, im));
 }
 
-PyObject* mul(PyObject* cn1, PyObject* cn2) {
-    return init(cn1.re * cn2.re - cn2.im * cn1.im, cn1.re * cn2.im + cn1.im * cn2.re);
+
+PyObject* sub(PyObject* self, PyObject* args) {
+    complex_num *c1, *c2;
+    double im, re;
+    if (!PyArg_ParseTuple(args, "O!O!", &cn_Type, &c1, &cn_Type, &c2)) return NULL;
+    re = c1->re - c2->re;
+    im = c1->im - c2->im;
+    return create(self, Py_BuildValue("(dd)", re, im));
 }
 
-complex_num* truediv(complex_num cn1, complex_num cn2) {
-    if (cn2.re == 0 && cn2.im == 0) {
+PyObject* mul(PyObject* self, PyObject* args) {
+    complex_num *c1, *c2;
+    double im, re;
+    if (!PyArg_ParseTuple(args, "O!O!", &cn_Type, &c1, &cn_Type, &c2)) return NULL;
+    re = c1->re * c2->re - c2->im * c1->im;
+    im = c1->re * c2->im + c1->im * c2->re;
+    return create(self, Py_BuildValue("(dd)", re, im));
+}
+
+PyObject* truediv(PyObject* self, PyObject* args) {
+    complex_num *c1, *c2;
+    double im, re;
+    if (!PyArg_ParseTuple(args, "O!O!", &cn_Type, &c1, &cn_Type, &c2)) return NULL;
+    if (c2->re == 0 && c2->im == 0) {
         printf("Деление на 0");
         return Py_None;
-    } else return init((cn1.re * cn2.re + cn1.im * cn2.im)
-                          / (cn2.re * cn2.re + cn2.im * cn2.im),
-                          (cn2.re * cn1.im - cn1.re * cn2.im) /
-                          (cn2.re * cn2.re + cn2.im * cn2.im));
+    } else {
+        re = (c1->re * c2->re + c1->im * c2->im) / (c2->re * c2->re + c2->im * c2->im);
+        im = (c2->re * c1->im - c1->re * c2->im) / (c2->re * c2->re + c2->im * c2->im);
+    }
+    return create(self, Py_BuildValue("(dd)", re, im));
 }
 
-complex_num* zPow(complex_num cn, double n) {
-    double cc1, zero = 0;
-    if (cn.re == 0 && cn.im == 0 && n == 0) return cn_init(1,0);
-    if (n > 0 && modf(n, &cc1) == zero)
-        return init(cn.norm * cos(cn.angle * n), cn.norm * sin(cn.angle * n));
+PyObject* zPow(PyObject* self, PyObject* args) {
+    complex_num* c;
+    double re, im;
+    int n;
+    if (!PyArg_ParseTuple(args, "O!i", &cn_Type, &c, &n)) return NULL;
+    if (c->re == 0 && c->im == 0 && n == 0) {
+        re = 0;
+        im = 0;
+        return create(self, Py_BuildValue("(dd)", re, im));
+    }
+    if (n > 0) {
+        re = pow(c->norm, n) * cos(c->angle * n);
+        im = pow(c->norm, n) * sin(c->angle * n);
+        return create(self, Py_BuildValue("(dd)", re, im));
+    }
     else return Py_None;
 }
 
-PyObject* ln(PyObject *self) {
-    complex_num* cn = (complex_num *)self;
-    printf("%.2f + i * (%.2f + 2pi * n, n - целое)\n", log(cn->norm), cn->angle);
+PyObject* ln(PyObject *self, PyObject* args) {
+    complex_num* c;
+    if (!PyArg_ParseTuple(args, "O!", &cn_Type, &c)) return NULL;
+    printf("%.2f + i * (%.2f + 2pi * n, n - целое)\n", log(c->norm), c->angle);
     Py_INCREF(Py_None);
     return Py_None;
 }
 
-PyObject* cPow(PyObject *self1, PyObject *self2) {
-    complex_num* cn1 = (complex_num *)self1;
-    complex_num* cn2 = (complex_num *)self2;
-    printf("e ^ ((%.2f + i * %.2f) * (%.2f + i * (%.2f + 2pi * n, n - целое))\n", cn2->re, cn2->im, log(cn1->norm), cn1->angle);
+PyObject* cPow(PyObject *self, PyObject *args) {
+    complex_num* c1, *c2;
+    if (!PyArg_ParseTuple(args, "O!O!", &cn_Type, &c1, &cn_Type, &c2)) return NULL;
+    printf("e ^ ((%.2f + i * %.2f) * (%.2f + i * (%.2f + 2pi * n, n - целое))\n", c2->re, c2->im, log(c1->norm),
+    c1->angle);
     Py_INCREF(Py_None);
     return Py_None;
 }
-*/
+
 PyObject* outAlg(PyObject* self) {
     complex_num* cn = (complex_num*)self;
-    char str[128];
     printf("%.2f + i * %.2f\n", cn->re, cn->im);
     Py_INCREF(Py_None);
     return Py_None;
@@ -164,7 +196,7 @@ PyObject* outTrig(PyObject* self) {
 
 PyObject* outExp(PyObject* self) {
     complex_num* cn = (complex_num *)self;
-    printf("%.2f * e ^ (i * %f.2)\n", cn->norm, cn->angle);
+    printf("%.2f * e ^ (i * %.2f)\n", cn->norm, cn->angle);
     Py_INCREF(Py_None);
     return Py_None;
 }
