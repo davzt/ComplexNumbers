@@ -51,12 +51,6 @@ PyMethodDef own_methods[] = {
                 "complex logarithm of complex number"
         },
         {
-                "ln",
-                ln,
-                METH_VARARGS,
-                "complex logarithm of complex number"
-        },
-        {
                 "conjugate",
                 conjugate,
                 METH_VARARGS,

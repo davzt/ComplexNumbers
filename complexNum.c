@@ -1,5 +1,6 @@
 #include "complexNum.h"
 
+// available methods to "complex number" object
 static PyMethodDef cn_methods[] = {
     {
         "outAlg",
@@ -46,6 +47,7 @@ static PyMethodDef cn_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+// cn_Type (type of "complex number" object) definition
 PyTypeObject cn_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "complex_num",
@@ -56,11 +58,13 @@ PyTypeObject cn_Type = {
     .tp_methods = cn_methods,
 };
 
+// method to free complex_num
 void clean(complex_num* self){
     Py_XDECREF(self);
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
+// side function to init complex_num with real, im, angle, norm
 void init(complex_num* cn, double re, double im) {
     cn->re = re;
     cn->im = im;
@@ -74,6 +78,7 @@ void init(complex_num* cn, double re, double im) {
     cn->norm = sqrt(re * re + im * im);
 }
 
+// creating a complex number
 PyObject* create(PyObject* self, PyObject* args) {
     double re, im;
     if (!PyArg_ParseTuple(args, "dd", &re, &im)) {
@@ -85,26 +90,31 @@ PyObject* create(PyObject* self, PyObject* args) {
     return (PyObject*)cn;
 }
 
+// method returning real part of number
 PyObject* re(PyObject* self) {
     complex_num* cn = (complex_num*)self;
     return Py_BuildValue("d", cn->re);
 }
 
+// method returning imaginary part of complex number
 PyObject* im(PyObject* self) {
     complex_num* cn = (complex_num*)self;
     return Py_BuildValue("d", cn->im);
 }
 
+// method returning norm of complex number
 PyObject* norm(PyObject* self) {
     complex_num* cn = (complex_num*)self;
     return Py_BuildValue("d", cn->norm);
 }
 
+// method returning angle of complex number
 PyObject* angle(PyObject* self) {
     complex_num* cn = (complex_num*)self;
     return Py_BuildValue("d", cn->angle);
 }
 
+// method returning conjugate of complex number
 PyObject* conjugate(PyObject* self, PyObject* args) {
     complex_num *c;
     double re, im;
@@ -117,6 +127,7 @@ PyObject* conjugate(PyObject* self, PyObject* args) {
     return create(self, Py_BuildValue("(dd)", re, im));
 }
 
+//method returning sum of two complex numbers
 PyObject* sum(PyObject* self, PyObject* args) {
     complex_num *c1, *c2;
     double im, re;
@@ -129,7 +140,7 @@ PyObject* sum(PyObject* self, PyObject* args) {
     return create(self, Py_BuildValue("(dd)", re, im));
 }
 
-
+// method returning subtract of two complex numbers
 PyObject* sub(PyObject* self, PyObject* args) {
     complex_num *c1, *c2;
     double im, re;
@@ -142,6 +153,7 @@ PyObject* sub(PyObject* self, PyObject* args) {
     return create(self, Py_BuildValue("(dd)", re, im));
 }
 
+// method returning multiplication of two complex numbers
 PyObject* mul(PyObject* self, PyObject* args) {
     complex_num *c1, *c2;
     double im, re;
@@ -154,6 +166,7 @@ PyObject* mul(PyObject* self, PyObject* args) {
     return create(self, Py_BuildValue("(dd)", re, im));
 }
 
+// method returning true division of two complex numbers
 PyObject* truediv(PyObject* self, PyObject* args) {
     complex_num *c1, *c2;
     double im, re;
@@ -171,6 +184,7 @@ PyObject* truediv(PyObject* self, PyObject* args) {
     return create(self, Py_BuildValue("(dd)", re, im));
 }
 
+// method returning integer pow of complex number
 PyObject* zPow(PyObject* self, PyObject* args) {
     complex_num* c;
     double re, im;
@@ -192,6 +206,7 @@ PyObject* zPow(PyObject* self, PyObject* args) {
     else return Py_None;
 }
 
+// method returning complex logarithm of complex number with defining number of branch
 PyObject* ln(PyObject *self, PyObject* args) {
     complex_num* c;
     int n;
@@ -212,6 +227,7 @@ PyObject* ln(PyObject *self, PyObject* args) {
     }
 }
 
+// method returning complex pow of complex number
 PyObject* cPow(PyObject *self, PyObject *args) {
     complex_num* c1, *c2;
     double re, im;
@@ -234,12 +250,14 @@ PyObject* cPow(PyObject *self, PyObject *args) {
     }
 }
 
+// method printing algebraic form of complex number
 PyObject* outAlg(PyObject* self) {
     complex_num* cn = (complex_num*)self;
     printf("%.2f + i * %.2f\n", cn->re, cn->im);
     return Py_None;
 }
 
+// method printing trigonometric form of complex number
 PyObject* outTrig(PyObject* self) {
     complex_num* cn = (complex_num *)self;
     printf("%.2f * (cos(%.2f) + i * sin(%.2f))\n", cn->norm, cn->angle, cn->angle);
@@ -247,6 +265,7 @@ PyObject* outTrig(PyObject* self) {
     return Py_None;
 }
 
+// method printing exponential form of complex number
 PyObject* outExp(PyObject* self) {
     complex_num* cn = (complex_num *)self;
     printf("%.2f * e ^ (i * %.2f)\n", cn->norm, cn->angle);
