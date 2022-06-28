@@ -5,8 +5,8 @@ Python module for complex numbers operations. C implemented.
 * _from complex_numbers import *_
 ---
 ## List of functions
-* **_CN(a, b)_** - creating complex number with real part _a_, imaginary part _b_;
-* For example: **_c = CN(a, b);_** 
+* **_CN(a, b)_** - creating complex number with real part _a_, imaginary part _b_, _a_ and _b_ must be numbers!
+* For example: **_c = CN(a, b)_** 
 * **_c.re()_** - real part of complex number
 * **_c.im()_** - imaginary part of complex number
 * **_c.norm()_** - norm of complex number
