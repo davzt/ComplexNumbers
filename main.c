@@ -50,6 +50,18 @@ PyMethodDef own_methods[] = {
                 METH_VARARGS,
                 "complex logarithm of complex number"
         },
+        {
+                "ln",
+                ln,
+                METH_VARARGS,
+                "complex logarithm of complex number"
+        },
+        {
+                "conjugate",
+                conjugate,
+                METH_VARARGS,
+                "Conjugate"
+        },
         {NULL, NULL, 0, NULL}
 };
 
@@ -63,10 +75,13 @@ static PyModuleDef simple_module = {
 
 PyMODINIT_FUNC PyInit_complex_numbers() {
     PyObject* module;
+
     cn_Type.tp_new = PyType_GenericNew;
-    if(PyType_Ready(&cn_Type) < 0) return NULL;
+    if (PyType_Ready(&cn_Type) < 0) return NULL;
     module = PyModule_Create(&simple_module);
+
     if (module == NULL) return NULL;
     Py_INCREF(&cn_Type);
+
     return module;
 }

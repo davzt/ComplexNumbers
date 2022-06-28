@@ -65,10 +65,10 @@ void init(complex_num* cn, double re, double im) {
     cn->re = re;
     cn->im = im;
     if (re == 0) {
-        if (im > 0) cn->angle = 3.14 / 2;
-        else cn->angle = 3 * 3.14 / 2;
+        if (im > 0) cn->angle = PI / 2;
+        else cn->angle = 3 * PI / 2;
     } else {
-        if (re < 0) cn->angle = atan(im / re) + 3.14;
+        if (re < 0) cn->angle = atan(im / re) + PI;
         else cn->angle = atan(im / re);
     }
     cn->norm = sqrt(re * re + im * im);
@@ -76,7 +76,10 @@ void init(complex_num* cn, double re, double im) {
 
 PyObject* create(PyObject* self, PyObject* args) {
     double re, im;
-    if (!PyArg_ParseTuple(args, "dd", &re, &im)) return NULL;
+    if (!PyArg_ParseTuple(args, "dd", &re, &im)) {
+    PyErr_SetString(PyExc_TypeError, "PARAMETERS MUST BE DOUBLE");
+    return NULL;
+    }
     complex_num* cn = PyObject_NEW(complex_num, &cn_Type);
     init(cn, re, im);
     return (PyObject*)cn;
@@ -102,10 +105,25 @@ PyObject* angle(PyObject* self) {
     return Py_BuildValue("d", cn->angle);
 }
 
+PyObject* conjugate(PyObject* self, PyObject* args) {
+    complex_num *c;
+    double re, im;
+    if (!PyArg_ParseTuple(args, "O!", &cn_Type, &c)) {
+        PyErr_SetString(PyExc_TypeError, "PARAMETER MUST BE COMPLEX_NUM");
+        return NULL;
+    }
+    re = c->re;
+    im = - c->im;
+    return create(self, Py_BuildValue("(dd)", re, im));
+}
+
 PyObject* sum(PyObject* self, PyObject* args) {
     complex_num *c1, *c2;
     double im, re;
-    if (!PyArg_ParseTuple(args, "O!O!", &cn_Type, &c1, &cn_Type, &c2)) return NULL;
+    if (!PyArg_ParseTuple(args, "O!O!", &cn_Type, &c1, &cn_Type, &c2)) {
+        PyErr_SetString(PyExc_TypeError, "PARAMETERS MUST BE COMPLEX_NUM");
+        return NULL;
+    }
     re = c1->re + c2->re;
     im = c1->im + c2->im;
     return create(self, Py_BuildValue("(dd)", re, im));
@@ -115,7 +133,10 @@ PyObject* sum(PyObject* self, PyObject* args) {
 PyObject* sub(PyObject* self, PyObject* args) {
     complex_num *c1, *c2;
     double im, re;
-    if (!PyArg_ParseTuple(args, "O!O!", &cn_Type, &c1, &cn_Type, &c2)) return NULL;
+    if (!PyArg_ParseTuple(args, "O!O!", &cn_Type, &c1, &cn_Type, &c2)) {
+         PyErr_SetString(PyExc_TypeError, "PARAMETERS MUST BE COMPLEX_NUM");
+         return NULL;
+    }
     re = c1->re - c2->re;
     im = c1->im - c2->im;
     return create(self, Py_BuildValue("(dd)", re, im));
@@ -124,7 +145,10 @@ PyObject* sub(PyObject* self, PyObject* args) {
 PyObject* mul(PyObject* self, PyObject* args) {
     complex_num *c1, *c2;
     double im, re;
-    if (!PyArg_ParseTuple(args, "O!O!", &cn_Type, &c1, &cn_Type, &c2)) return NULL;
+    if (!PyArg_ParseTuple(args, "O!O!", &cn_Type, &c1, &cn_Type, &c2)) {
+         PyErr_SetString(PyExc_TypeError, "PARAMETERS MUST BE COMPLEX_NUM");
+         return NULL;
+    }
     re = c1->re * c2->re - c2->im * c1->im;
     im = c1->re * c2->im + c1->im * c2->re;
     return create(self, Py_BuildValue("(dd)", re, im));
@@ -133,10 +157,13 @@ PyObject* mul(PyObject* self, PyObject* args) {
 PyObject* truediv(PyObject* self, PyObject* args) {
     complex_num *c1, *c2;
     double im, re;
-    if (!PyArg_ParseTuple(args, "O!O!", &cn_Type, &c1, &cn_Type, &c2)) return NULL;
+    if (!PyArg_ParseTuple(args, "O!O!", &cn_Type, &c1, &cn_Type, &c2)) {
+         PyErr_SetString(PyExc_TypeError, "PARAMETERS MUST BE COMPLEX_NUM");
+         return NULL;
+    }
     if (c2->re == 0 && c2->im == 0) {
-        printf("Деление на 0");
-        return Py_None;
+        PyErr_SetString(PyExc_ValueError, "DIVISION BY ZERO");
+        return NULL;
     } else {
         re = (c1->re * c2->re + c1->im * c2->im) / (c2->re * c2->re + c2->im * c2->im);
         im = (c2->re * c1->im - c1->re * c2->im) / (c2->re * c2->re + c2->im * c2->im);
@@ -148,7 +175,10 @@ PyObject* zPow(PyObject* self, PyObject* args) {
     complex_num* c;
     double re, im;
     int n;
-    if (!PyArg_ParseTuple(args, "O!i", &cn_Type, &c, &n)) return NULL;
+    if (!PyArg_ParseTuple(args, "O!i", &cn_Type, &c, &n)) {
+         PyErr_SetString(PyExc_TypeError, "PARAMETERS MUST BE COMPLEX_NUM AND INTEGER");
+         return NULL;
+    }
     if (c->re == 0 && c->im == 0 && n == 0) {
         re = 0;
         im = 0;
@@ -164,25 +194,49 @@ PyObject* zPow(PyObject* self, PyObject* args) {
 
 PyObject* ln(PyObject *self, PyObject* args) {
     complex_num* c;
-    if (!PyArg_ParseTuple(args, "O!", &cn_Type, &c)) return NULL;
-    printf("%.2f + i * (%.2f + 2pi * n, n - целое)\n", log(c->norm), c->angle);
-    Py_INCREF(Py_None);
-    return Py_None;
+    int n;
+    double im, re;
+    if (!PyArg_ParseTuple(args, "O!i", &cn_Type, &c, &n)) {
+         PyErr_SetString(PyExc_TypeError, "PARAMETER MUST BE COMPLEX_NUM AND THE NUMBER OF THE LOGARITHM'S BRANCH MUST BE INTEGER");
+         return NULL;
+    }
+    if (c->norm != 0) {
+        re = log(c->norm);
+        im = c->angle + 2 * PI * n;
+        printf("%.2f + i * (%.2f + 2pi * n, n - integer)\n", log(c->norm), c->angle);
+        return create(self, Py_BuildValue("(dd)", re, im));
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError, "ln(0) IS NOT DEFINED");
+        return NULL;
+    }
 }
 
 PyObject* cPow(PyObject *self, PyObject *args) {
     complex_num* c1, *c2;
-    if (!PyArg_ParseTuple(args, "O!O!", &cn_Type, &c1, &cn_Type, &c2)) return NULL;
-    printf("e ^ ((%.2f + i * %.2f) * (%.2f + i * (%.2f + 2pi * n, n - целое))\n", c2->re, c2->im, log(c1->norm),
-    c1->angle);
-    Py_INCREF(Py_None);
-    return Py_None;
+    double re, im;
+    if (!PyArg_ParseTuple(args, "O!O!", &cn_Type, &c1, &cn_Type, &c2)) {
+         PyErr_SetString(PyExc_TypeError, "PARAMETERS MUST BE COMPLEX_NUM AND THE NUMBER OF THE LOGARITHM'S BRANCH MUST BE INTEGER");
+         return NULL;
+    }
+    if (c1->norm != 0) {
+        printf("e ^ ((%.2f + i * %.2f) * (%.2f + i * (%.2f + 2pi * n, n - integer))\n", c2->re, c2->im, log(c1->norm),
+        c1->angle);
+        return Py_None;
+    }
+    else {
+        if (c2->norm == 0) {
+            printf("1");
+            return Py_None;
+        }
+        PyErr_SetString(PyExc_ValueError, "ln(0) IS NOT DEFINED");
+        return NULL;
+    }
 }
 
 PyObject* outAlg(PyObject* self) {
     complex_num* cn = (complex_num*)self;
     printf("%.2f + i * %.2f\n", cn->re, cn->im);
-    Py_INCREF(Py_None);
     return Py_None;
 }
 
@@ -190,43 +244,11 @@ PyObject* outTrig(PyObject* self) {
     complex_num* cn = (complex_num *)self;
     printf("%.2f * (cos(%.2f) + i * sin(%.2f))\n", cn->norm, cn->angle, cn->angle);
     printf("or %.2f * (%.2f + i * %.2f)\n", cn->norm, cos(cn->angle), sin(cn->angle));
-    Py_INCREF(Py_None);
     return Py_None;
 }
 
 PyObject* outExp(PyObject* self) {
     complex_num* cn = (complex_num *)self;
     printf("%.2f * e ^ (i * %.2f)\n", cn->norm, cn->angle);
-    Py_INCREF(Py_None);
     return Py_None;
 }
-/*
-double diffx(double (*f)(double, double), double x, double y) {
-    const double delta = 1.0e-6;
-    return (f(x + delta, y) - f(x, y)) / delta;
-}
-
-double diffy(double (*f)(double, double), double x, double y) {
-    const double delta = 1.0e-6;
-    return (f(x, y + delta) - f(x, y)) / delta;
-}
-
-double u(x, y) {
-    return x * x - 2 * y;
-}
-
-double v(x, y) {
-    return y * y - 2 * y + x;
-}
-
-complex_num * complex_derivative (double (*u)(double, double), double (*v)(double, double), double x, double y) {
-    double dux = diffx(u, x, y);
-    double duy = diffy(u, x, y);
-    double dvx = diffx(v, x, y);
-    double dvy = diffy(v, x, y);
-    if (dux == dvy && - dvx == duy) {
-        return init(dux, dvx);
-    }
-    else return Py_None;
-}
-*/
